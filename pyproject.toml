@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "project2-samoylov-m25-555"
+version = "0.1.0"
+description = ""
+authors = ["IlyaSamoylov <ilya.samoylov2004@mail.ru>"]
+readme = "README.md"
+packages = [
+    { include = "src" },
+]
+
+
+[tool.poetry.scripts]
+project = "src.primitive_db.main:main"
+
+ 
+[tool.poetry.dependencies]
+python = "^3.13"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
