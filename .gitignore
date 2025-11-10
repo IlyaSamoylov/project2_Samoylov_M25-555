@@ -213,3 +213,6 @@ __pycache__/
 .DS_Store
 .vscode/
 *.egg-info/
+
+# метаданные
+db_meta.json
