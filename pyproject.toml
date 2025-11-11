@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "project2-samoylov-m25-555"
 version = "0.1.0"
-description = ""
+description = "Консольное приложение, имитирующее работу базы данных на json"
 authors = ["IlyaSamoylov <ilya.samoylov2004@mail.ru>"]
 readme = "README.md"
 packages = [
