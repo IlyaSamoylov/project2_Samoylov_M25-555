@@ -1,9 +1,9 @@
 import shlex
-from pathlib import Path
 from typing import Any
 
 import prompt
 
+from src.primitive_db.constants import DB_META_FILE
 from src.primitive_db.core import (
 	create_table,
 	delete,
@@ -21,18 +21,21 @@ from src.primitive_db.utils import (
 	save_table_data,
 )
 
-DB_FILE = Path(__file__).resolve().parents[2] / "db_meta.json"
 
-# DB_FILE = "db_meta.json"
-# TODO: перепроверить парсеры тоже
 def parse_where(tokens: list[str]) -> dict[str, Any] | None:
 	"""
 	Парсит выражение WHERE в словарь.
+
+	:param tokens: (list[str]) разбитое считанное условие where
+
+	:return: (dict[str, Any] | None) словарь ключ-значение для where, либо None, если
+	where не было
 
 	Пример:
 	>>> parse_where(["age", "=", "28"])
 	{'age': '28'}
 	"""
+
 	try:
 		if len(tokens) < 3 or tokens[1] != "=":
 			raise ValueError
@@ -48,6 +51,11 @@ def parse_set(tokens: list[str]) -> dict[str, Any] | None:
 	"""
 	Парсит выражение SET в словарь.
 
+	:param tokens: (list[str]) разбитое считанное условие set
+
+	:return: (dict[str, Any] | None) словарь ключ-значение для set, либо None, если
+	set не было
+
 	Пример:
 	>>> parse_set(["age", "=", "30"])
 	{'age': '30'}
@@ -62,42 +70,28 @@ def parse_set(tokens: list[str]) -> dict[str, Any] | None:
 		print("Ошибка: некорректный SET.")
 		return None
 
-def welcome():
-	"""
-	Функция-хелпер: выводит доступные команды, считывает команды с консоли и реагирует
-	"""
-	print("***")
-	print("<command> exit - выйти из программы")
-	print("<command> help - справочная информация\n")
-
-	command = prompt.string('Введите команду: ')
-	match command:
-		case "exit":
-			print("Выход из программы...")
-
-		case "help":
-			print("\n<command> exit - выйти из программы")
-			print("<command> help - справочная информация\n")
-			welcome()
-
-		case _:
-			print(f"Неизвестная команда: {command}\n")
-			welcome()
-
 def print_help() -> None:
 	"""Выводит справочную информацию по командам."""
+	print("\n***Операции с таблицами***")
+	print("create_table <имя_таблицы> <столбец1:тип> <столбец2:тип> ... - создать "
+																			"таблицу")
+	print("drop_table <имя_таблицы> - удалить таблицу (с подтверждением)")
+	print("list_tables - показать список всех таблиц")
+
 	print("\n***Операции с данными***")
-	print("Функции:")
-	print("<command> insert into <имя_таблицы> values (...) - добавить запись")
-	print("<command> select from <имя_таблицы> [where <столбец> = <значение>] - "
-                                                                    "показать записи")
-	print("<command> update <имя_таблицы> set <столбец> = <значение> where ... -"
-                                                                    " обновить запись")
-	print("<command> delete from <имя_таблицы> where <столбец> = <значение> - "
-                                                                    "удалить запись")
-	print("<command> info <имя_таблицы> - информация о таблице")
-	print("<command> exit - выход из программы")
-	print("<command> help - справка\n")
+	print("insert into <имя_таблицы> values (<значение1>, <значение2>, ...) - "
+																	"добавить запись")
+	print("select from <имя_таблицы> [where <столбец> = <значение>] - показать записи")
+	print("update <имя_таблицы> set <столбец> = <значение> where <столбец> = <значение>"
+																" - обновить запись")
+	print("delete from <имя_таблицы> where <столбец> = <значение> - удалить запись"
+																" (с подтверждением)")
+	print("info <имя_таблицы> - информация о структуре таблицы")
+
+	print("\n***Дополнительно***")
+	print("help - показать эту справку")
+	print("exit - выйти из программы")
+	print("clear_cache - очистить кэш выборок (select)\n")
 
 def run():
 	"""Главный цикл программы."""
@@ -105,7 +99,7 @@ def run():
 	print_help()
 
 	while True:
-		user_input = input(">>> Введите команду: ").strip()
+		user_input = prompt.string(">>> Введите команду: ").strip()
 
 		if not user_input:
 			continue
@@ -117,7 +111,7 @@ def run():
 			continue
 
 		command = args[0]
-		metadata = load_metadata(DB_FILE)
+		metadata = load_metadata(DB_META_FILE)
 
 		match command:
 			case "create_table":
@@ -127,7 +121,7 @@ def run():
 				table_name = args[1]
 				columns = args[2:]
 				updated = create_table(metadata, table_name, columns)
-				save_metadata(DB_FILE, updated)
+				save_metadata(DB_META_FILE, updated)
 
 			case "drop_table":
 				if len(args) != 2:
@@ -135,7 +129,7 @@ def run():
 					continue
 				table_name = args[1]
 				updated = drop_table(metadata, table_name)
-				save_metadata(DB_FILE, updated)
+				save_metadata(DB_META_FILE, updated)
 
 			case "insert":
 				if len(args) < 5 or args[1] != "into" or args[3] != "values":
@@ -143,7 +137,6 @@ def run():
 					continue
 				table_name = args[2]
 				values_str = " ".join(args[4:])
-				# values = shlex.split(values_str.strip("()"), )
 				values = values_str.strip("()").split(", ")
 				insert(metadata, table_name, values)
 

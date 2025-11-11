@@ -1,7 +1,7 @@
 import json
-from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+from src.primitive_db.constants import DATA_DIR
+
 
 def load_metadata(filepath: str) -> dict:
 	'''
