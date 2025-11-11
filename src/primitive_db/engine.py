@@ -1,15 +1,66 @@
-import prompt
 import shlex
-from typing import Any
-from src.primitive_db.utils import (load_metadata, save_metadata, load_table_data,
-                                    save_table_data)
-from src.primitive_db.core import (create_table, drop_table, list_tables, insert,
-                                   select, update, delete, info)
 from pathlib import Path
+from typing import Any
+
+import prompt
+
+from src.primitive_db.core import (
+	create_table,
+	delete,
+	drop_table,
+	info,
+	insert,
+	list_tables,
+	select,
+	update,
+)
+from src.primitive_db.utils import (
+	load_metadata,
+	load_table_data,
+	save_metadata,
+	save_table_data,
+)
 
 DB_FILE = Path(__file__).resolve().parents[2] / "db_meta.json"
 
 # DB_FILE = "db_meta.json"
+# TODO: перепроверить парсеры тоже
+def parse_where(tokens: list[str]) -> dict[str, Any] | None:
+	"""
+	Парсит выражение WHERE в словарь.
+
+	Пример:
+	>>> parse_where(["age", "=", "28"])
+	{'age': '28'}
+	"""
+	try:
+		if len(tokens) < 3 or tokens[1] != "=":
+			raise ValueError
+		key = tokens[0]
+		val = tokens[2].strip('"').strip("'")
+		return {key: val}
+	except Exception:
+		print("Ошибка: некорректное условие WHERE.")
+		return None
+
+
+def parse_set(tokens: list[str]) -> dict[str, Any] | None:
+	"""
+	Парсит выражение SET в словарь.
+
+	Пример:
+	>>> parse_set(["age", "=", "30"])
+	{'age': '30'}
+	"""
+	try:
+		if len(tokens) < 3 or tokens[1] != "=":
+			raise ValueError
+		key = tokens[0]
+		val = tokens[2].strip('"').strip("'")
+		return {key: val}
+	except Exception:
+		print("Ошибка: некорректный SET.")
+		return None
 
 def welcome():
 	"""
@@ -38,9 +89,12 @@ def print_help() -> None:
 	print("\n***Операции с данными***")
 	print("Функции:")
 	print("<command> insert into <имя_таблицы> values (...) - добавить запись")
-	print("<command> select from <имя_таблицы> [where <столбец> = <значение>] - показать записи")
-	print("<command> update <имя_таблицы> set <столбец> = <значение> where ... - обновить запись")
-	print("<command> delete from <имя_таблицы> where <столбец> = <значение> - удалить запись")
+	print("<command> select from <имя_таблицы> [where <столбец> = <значение>] - "
+                                                                    "показать записи")
+	print("<command> update <имя_таблицы> set <столбец> = <значение> where ... -"
+                                                                    " обновить запись")
+	print("<command> delete from <имя_таблицы> where <столбец> = <значение> - "
+                                                                    "удалить запись")
 	print("<command> info <имя_таблицы> - информация о таблице")
 	print("<command> exit - выход из программы")
 	print("<command> help - справка\n")
@@ -121,7 +175,7 @@ def run():
 
 				if set_clause and where_clause:
 					updated_data: list[dict] = update(table_data, set_clause,
-					                                  where_clause)
+																		where_clause)
 					save_table_data(table_name, updated_data)
 
 			case "delete":
@@ -155,42 +209,4 @@ def run():
 
 			case _:
 				print(f"Функции {command} нет. Попробуйте снова или вызовите справочник"
-				      f"по команде 'help'.")
-
-# TODO: перепроверить парсеры тоже
-def parse_where(tokens: list[str]) -> dict[str, Any] | None:
-	"""
-	Парсит выражение WHERE в словарь.
-
-	Пример:
-	>>> parse_where(["age", "=", "28"])
-	{'age': '28'}
-	"""
-	try:
-		if len(tokens) < 3 or tokens[1] != "=":
-			raise ValueError
-		key = tokens[0]
-		val = tokens[2].strip('"').strip("'")
-		return {key: val}
-	except Exception:
-		print("Ошибка: некорректное условие WHERE.")
-		return None
-
-
-def parse_set(tokens: list[str]) -> dict[str, Any] | None:
-	"""
-	Парсит выражение SET в словарь.
-
-	Пример:
-	>>> parse_set(["age", "=", "30"])
-	{'age': '30'}
-	"""
-	try:
-		if len(tokens) < 3 or tokens[1] != "=":
-			raise ValueError
-		key = tokens[0]
-		val = tokens[2].strip('"').strip("'")
-		return {key: val}
-	except Exception:
-		print("Ошибка: некорректный SET.")
-		return None
+																f"по команде 'help'.")

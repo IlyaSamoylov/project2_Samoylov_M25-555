@@ -1,8 +1,14 @@
+from pathlib import Path
 from typing import Any
+
 from prettytable import PrettyTable
+
+from src.decorators import confirm_action, create_cacher, handle_db_errors, log_time
 from src.primitive_db.utils import load_table_data, save_table_data
 
 VALID_TYPES = {"int", "str", "bool"}
+
+cache_result = create_cacher()
 
 def create_table(metadata: dict, table_name: str, columns: list[str]) -> dict:
 	"""
@@ -30,22 +36,23 @@ def create_table(metadata: dict, table_name: str, columns: list[str]) -> dict:
 		name, type_ = col.split(":", 1)
 		if type_ not in VALID_TYPES:
 			print(f"Некорректный тип: {type_}. Поддерживаются только "
-			      f"{', '.join(VALID_TYPES)}.")
+				f"{', '.join(VALID_TYPES)}.")
 			return metadata
 		table_structure.append((name, type_))
 
 	metadata[table_name] = {col: typ for col, typ in table_structure}
 	print(f'Таблица "{table_name}" успешно создана со столбцами: ' +
-	      ", ".join(f"{k}:{v}" for k, v in metadata[table_name].items()))
+						", ".join(f"{k}:{v}" for k, v in metadata[table_name].items()))
 	return metadata
 
-
+@handle_db_errors
+@confirm_action("удалить таблицу")
 def drop_table(metadata: dict, table_name: str) -> dict:
 	"""
 	Удаляет информацию о таблице из метаданных, если такая была
 
 	:param:
-	    metadata: (dict) метаданные
+        metadata: (dict) метаданные
 		table_name: (str) имя таблицы
 	:return:
 		(dict) обновленные метаданные
@@ -55,7 +62,14 @@ def drop_table(metadata: dict, table_name: str) -> dict:
 		return metadata
 
 	del metadata[table_name]
+
+	data_file = Path(__file__).resolve().parents[2] / "data" / f"{table_name}.json"
+	if data_file.exists():
+		data_file.unlink()
+
 	print(f'Таблица "{table_name}" успешно удалена.')
+	cache_result.clear_cache()
+
 	return metadata
 
 def list_tables(metadata: dict) -> None:
@@ -72,7 +86,10 @@ def list_tables(metadata: dict) -> None:
 	print("Список таблиц:")
 	for table in metadata.keys():
 		print(f"- {table}")
+
 # TODO перепроверить CRUD, чтобы все условия выполнял и не было избыточной сложности
+@handle_db_errors
+@log_time
 def insert(metadata: dict, table_name: str, values: list[str]) -> None:
 	"""
 	Если таблица существует и количество переданных значений соответствует числу
@@ -114,37 +131,56 @@ def insert(metadata: dict, table_name: str, values: list[str]) -> None:
 	data.append(record)
 	save_table_data(table_name, data)
 	print(f'Запись с ID={new_id} успешно добавлена в таблицу "{table_name}".')
+	cache_result.clear_cache() # очистка кэша
 
-def select(table_data: list[dict], where_clause: dict | None = None) -> list[dict]:
+@handle_db_errors
+@log_time
+def select(table_data: list[dict], where_clause: dict | None = None) -> str:
 	"""
-	Возвращает записи из таблицы по условию.
+    Возвращает строковое представление таблицы (PrettyTable) по условию.
 
-	:param table_data: список всех записей таблицы
-	:param where_clause: условие выборки, например {"age": 28}
-	:return: список отфильтрованных записей
-	"""
+    Использует кэширование: при повторных одинаковых запросах результат берётся из кэша.
+    :param table_data: список всех записей таблицы
+    :param where_clause: условие выборки, например {"age": 28}
+    :return: строка с отформатированной таблицей (готовая к печати)
+    """
 	if not table_data:
 		print("Нет данных для отображения.")
 		return []
 
-	if where_clause:
-		col, val = next(iter(where_clause.items()))
-		filtered = [row for row in table_data if str(row.get(col)) == str(val)]
-	else:
-		filtered = table_data
+	def _select_logic() -> str:
 
-	if not filtered:
-		print("Нет записей, удовлетворяющих условию.")
-		return []
 
-	table = PrettyTable()
-	table.field_names = table_data[0].keys()
-	for row in filtered:
-		table.add_row([row.get(col, "") for col in table.field_names])
-	print(table)
+		if where_clause:
+			col, val = next(iter(where_clause.items()))
+			filtered = [row for row in table_data if str(row.get(col)) == str(val)]
+		else:
+			filtered = table_data
 
-	return filtered
+		if not filtered:
+			print("Нет записей, удовлетворяющих условию.")
+			return []
 
+		table = PrettyTable()
+		table.field_names = table_data[0].keys()
+		for row in filtered:
+			table.add_row([row.get(col, "") for col in table.field_names])
+		# print(table)
+		# return filtered
+		table_str = table.get_string()
+		# print(table_str)
+		return table_str
+
+	# ключ для кэша
+	cache_key = str(where_clause) if where_clause else "ALL"
+
+	# return cache_result(cache_key, _select_logic)
+	result = cache_result(cache_key, _select_logic)
+	if result:
+		print(result)
+	return result
+
+@handle_db_errors
 def update(table_data: list[dict], set_clause: dict[str, Any],
            where_clause: dict[str, Any],) -> list[dict]:
 	"""
@@ -175,8 +211,12 @@ def update(table_data: list[dict], set_clause: dict[str, Any],
 	if not updated:
 		print("Подходящих записей не найдено.")
 
+	cache_result.clear_cache()
+
 	return table_data
 
+@handle_db_errors
+@confirm_action("удалить записи")
 def delete(table_data: list[dict], where_clause: dict[str, Any]) -> list[dict]:
 	"""
 	Удаляет записи из таблицы по условию.
@@ -186,24 +226,17 @@ def delete(table_data: list[dict], where_clause: dict[str, Any]) -> list[dict]:
 	:return: обновлённый список записей
 	"""
 	col_where, val_where = next(iter(where_clause.items()))
-	new_data: list[dict] = [r for r in table_data if str(r.get(col_where)) != str(val_where)]
+	new_data: list[dict] = [r for r in table_data if str(r.get(col_where))
+																	!= str(val_where)]
 
 	if len(new_data) == len(table_data):
 		print("Записей для удаления не найдено.")
 	else:
 		print(f"Удалено {len(table_data) - len(new_data)} записей из таблицы.")
 
+	cache_result.clear_cache()
+
 	return new_data
-
-def info(metadata, table_name):
-	if table_name not in metadata:
-		print(f'Ошибка: Таблица "{table_name}" не существует.')
-		return
-
-	data = load_table_data(table_name)
-	print(f"Таблица: {table_name}")
-	print("Столбцы:", ", ".join(f"{k}:{v}" for k, v in metadata[table_name].items()))
-	print(f"Количество записей: {len(data)}")
 
 def info(metadata: dict, table_name: str) -> None:
 	"""
@@ -215,8 +248,6 @@ def info(metadata: dict, table_name: str) -> None:
 	if table_name not in metadata:
 		print(f'Ошибка: Таблица "{table_name}" не существует.')
 		return
-
-	from src.primitive_db.utils import load_table_data
 
 	data: list[dict] = load_table_data(table_name)
 	print(f"Таблица: {table_name}")
