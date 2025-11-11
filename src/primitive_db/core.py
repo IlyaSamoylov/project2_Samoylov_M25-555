@@ -4,9 +4,8 @@ from typing import Any
 from prettytable import PrettyTable
 
 from src.decorators import confirm_action, create_cacher, handle_db_errors, log_time
+from src.primitive_db.constants import VALID_TYPES
 from src.primitive_db.utils import load_table_data, save_table_data
-
-VALID_TYPES = {"int", "str", "bool"}
 
 cache_result = create_cacher()
 
