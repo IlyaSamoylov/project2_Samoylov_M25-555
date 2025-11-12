@@ -138,9 +138,10 @@ def select(table_data: list[dict], where_clause: dict | None = None) -> str:
     Возвращает строковое представление таблицы (PrettyTable) по условию.
 
     Использует кэширование: при повторных одинаковых запросах результат берётся из кэша.
-    :param table_data: список всех записей таблицы
-    :param where_clause: условие выборки, например {"age": 28}
-    :return: строка с отформатированной таблицей (готовая к печати)
+    :param
+        table_data: (list[dict]) список всех записей таблицы
+        where_clause: (dict | None) условие выборки, например {"age": 28}
+    :return: (str) строка с отформатированной таблицей (готовая к печати)
     """
 	if not table_data:
 		print("Нет данных для отображения.")
@@ -176,14 +177,15 @@ def select(table_data: list[dict], where_clause: dict | None = None) -> str:
 
 @handle_db_errors
 def update(table_data: list[dict], set_clause: dict[str, Any],
-           where_clause: dict[str, Any],) -> list[dict]:
+           where_clause: dict[str, Any]) -> list[dict]:
 	"""
 	Обновляет записи в таблице по условию.
 
-	:param table_data: список записей таблицы
-	:param set_clause: изменения, например {"age": 29}
-	:param where_clause: условие выборки, например {"name": "Sergei"}
-	:return: обновлённый список записей
+	:param
+		table_data: (list[dict]) список записей таблицы
+		set_clause: (dict[str, Any]) изменения, например {"age": 29}
+		where_clause: (dict[str, Any]) условие выборки, например {"name": "Sergei"}
+	:return: (list[dict]) обновлённый список записей
 	"""
 	col_where, val_where = next(iter(where_clause.items()))
 	updated = False
@@ -215,12 +217,13 @@ def delete(table_data: list[dict], where_clause: dict[str, Any]) -> list[dict]:
 	"""
 	Удаляет записи из таблицы по условию.
 
-	:param table_data: список записей таблицы
-	:param where_clause: условие удаления, например {"ID": 1}
-	:return: обновлённый список записей
+	:param
+		table_data: (list[dict]) список записей таблицы
+		where_clause: (dict[str, Any]) условие удаления, например {"ID": 1}
+	:return: (list[dict]) обновлённый список записей
 	"""
 	col_where, val_where = next(iter(where_clause.items()))
-	new_data: list[dict] = [r for r in table_data if str(r.get(col_where))
+	new_data = [r for r in table_data if str(r.get(col_where))
 																	!= str(val_where)]
 
 	if len(new_data) == len(table_data):
@@ -243,7 +246,7 @@ def info(metadata: dict, table_name: str) -> None:
 		print(f'Ошибка: Таблица "{table_name}" не существует.')
 		return
 
-	data: list[dict] = load_table_data(table_name)
+	data = load_table_data(table_name)
 	print(f"Таблица: {table_name}")
 	print("Столбцы:", ", ".join(f"{k}:{v}" for k, v in metadata[table_name].items()))
 	print(f"Количество записей: {len(data)}")
