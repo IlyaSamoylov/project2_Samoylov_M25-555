@@ -12,7 +12,7 @@
 
 ### Предварительные требования
 
-- Python 3.11 или выше
+- Python 3.12 или выше
 - Poetry (менеджер зависимостей)
 - Make (опционально, для удобства)
 
@@ -21,7 +21,7 @@
 1. **Клонируйте репозиторий:**
    ```bash
    git clone https://github.com/IlyaSamoylov/project2_Samoylov_M25-555
-   cd labyrinth_game
+   cd project2_Samoylov_M25-555
    ```
 
 2. **Установите poetry (если не установлен)**
@@ -46,13 +46,13 @@
 5. **Активируйте виртуальное окружение**
   ### Linux
   ```bash
-  poetry shell
+  source .venv/bin/activate
   ```
   ### Windows
   ```bash
   source .venv/Scripts/activate
   ```
-6. **Начните играть**
+6. **Начните использовать**
    ## через make:
    ```bash
     make run
@@ -64,7 +64,7 @@
 
 ## Управление таблицами
 
-Доступные команды внутри программы:
+Доступные команды для работы с таблицами:
 
 | Команда                                         | Описание               |
 | ----------------------------------------------- | ---------------------- |
@@ -75,56 +75,6 @@
 | `exit`                                          | выйти из программы     |
 
 Поддерживаемые типы данных: `int`, `str`, `bool`.
-
-## Пример работы
-
-```
->>> create_table users name:str age:int is_active:bool
-Таблица "users" успешно создана со столбцами: ID:int, name:str, age:int, is_active:bool
->>> list_tables
-- users
->>> drop_table users 
-Таблица "users" успешно удалена.
-```
-
-
----
-
-## Файл метаданных
-
-Все данные о таблицах хранятся в `db_meta.json` в корне проекта.  
-Пример содержимого:
-```json
-{     
-	"users": {        
-		"ID": "int",
-		"name": "str",
-		"age": "int",
-		"is_active": "bool"
-	}
-}
-```
-
-
----
-
-## Разработка
-
-- Установка зависимостей:
-    
-    `make install`
-    
-- Проверка кода линтером:
-    
-    `make lint`
-    
-- Сборка пакета:
-    
-    `make build`
-    
-- Тест публикации (без загрузки):
-    
-    `make publish`
 
 ## CRUD операции
 | Команда                                                               | Описание             |
@@ -165,3 +115,76 @@
 [КЭШ] Используется сохранённый результат для ключа: '...'
 ```
 При изменении данных (insert, update, delete, drop_table) кэш очищается во избежание хранения в кэше устаревших данных .
+
+## Пример работы
+
+```
+>>> create_table users name:str age:int is_active:bool
+Таблица "users" успешно создана со столбцами: ID:int, name:str, age:int, is_active:bool
+>>> list_tables
+- users
+>>> drop_table users 
+Таблица "users" успешно удалена.
+```
+
+
+---
+
+## Файл метаданных
+
+Все данные о таблицах хранятся в `db_meta.json` в корне проекта.  
+Пример содержимого:
+```json
+{     
+	"users": {        
+		"ID": "int",
+		"name": "str",
+		"age": "int",
+		"is_active": "bool"
+	}
+}
+```
+## Файл данных таблицы
+
+Все записи таблиц хранятся в `<имя таблицы>.json` папке `data` в корне проекта.  
+Пример содержимого:
+```json
+[
+    {
+        "ID": 1,
+        "name": "Alice",
+        "age": 25,
+        "is_active": true
+    },
+    {
+        "ID": 2,
+        "name": "Bob",
+        "age": 30,
+        "is_active": false
+    }
+]
+```
+
+
+---
+
+## Разработка
+
+- Установка зависимостей:
+    
+    `make install`
+    
+- Проверка кода линтером:
+    
+    `make lint`
+    
+- Сборка пакета:
+    
+    `make build`
+    
+- Тест публикации (без загрузки):
+    
+    `make publish`
+
+Пример использования:
+[![asciicast](https://asciinema.org/a/Fv6xIuRQK0UXcfKxSK1QnLBYD.svg)](https://asciinema.org/a/Fv6xIuRQK0UXcfKxSK1QnLBYD)
