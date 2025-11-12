@@ -91,7 +91,6 @@ def print_help() -> None:
 	print("\n***Дополнительно***")
 	print("help - показать эту справку")
 	print("exit - выйти из программы")
-	print("clear_cache - очистить кэш выборок (select)\n")
 
 def run():
 	"""Главный цикл программы."""
@@ -144,10 +143,10 @@ def run():
 				if len(args) < 3 or args[1] != "from":
 					print("Ошибка синтаксиса. Пример: select from <table>")
 					continue
-				table_name: str = args[2]
-				table_data: list[dict] = load_table_data(table_name)
+				table_name = args[2]
+				table_data = load_table_data(table_name)
 
-				where_clause: dict | None = None
+				where_clause = None
 				if len(args) > 3 and args[3] == "where":
 					where_clause = parse_where(args[4:])
 
@@ -157,30 +156,29 @@ def run():
 				if "set" not in args or "where" not in args:
 					print("Ошибка синтаксиса. Пример: update <table> set x=1 where y=2")
 					continue
-				table_name: str = args[1]
-				table_data: list[dict] = load_table_data(table_name)
+				table_name = args[1]
+				table_data = load_table_data(table_name)
 
-				set_index: int = args.index("set")
-				where_index: int = args.index("where")
+				set_index = args.index("set")
+				where_index = args.index("where")
 
-				set_clause: dict | None = parse_set(args[set_index + 1:where_index])
-				where_clause: dict | None = parse_where(args[where_index + 1:])
+				set_clause = parse_set(args[set_index + 1:where_index])
+				where_clause = parse_where(args[where_index + 1:])
 
 				if set_clause and where_clause:
-					updated_data: list[dict] = update(table_data, set_clause,
-																		where_clause)
+					updated_data = update(table_data, set_clause, where_clause)
 					save_table_data(table_name, updated_data)
 
 			case "delete":
 				if len(args) < 6 or args[1] != "from" or args[3] != "where":
 					print("Ошибка синтаксиса. Пример: delete from <table> where x=1")
 					continue
-				table_name: str = args[2]
-				table_data: list[dict] = load_table_data(table_name)
+				table_name = args[2]
+				table_data = load_table_data(table_name)
 
-				where_clause: dict | None = parse_where(args[4:])
+				where_clause = parse_where(args[4:])
 				if where_clause:
-					new_data: list[dict] = delete(table_data, where_clause)
+					new_data = delete(table_data, where_clause)
 					save_table_data(table_name, new_data)
 
 

@@ -76,7 +76,7 @@ def create_cacher() -> Callable[[str, Callable[[], Any]], Any]:
 	Если значение есть — возвращает его.
 	Если нет — вызывает value_func(), сохраняет результат и возвращает его.
 	"""
-	cache: dict[str, Any] = {}
+	cache = {}
 
 	def cache_result(key: str, value_func: Callable[[], Any]) -> Any:
 		if key in cache:
