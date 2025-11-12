@@ -86,7 +86,6 @@ def list_tables(metadata: dict) -> None:
 	for table in metadata.keys():
 		print(f"- {table}")
 
-# TODO перепроверить CRUD, чтобы все условия выполнял и не было избыточной сложности
 @handle_db_errors
 @log_time
 def insert(metadata: dict, table_name: str, values: list[str]) -> None:
@@ -145,7 +144,7 @@ def select(table_data: list[dict], where_clause: dict | None = None) -> str:
     """
 	if not table_data:
 		print("Нет данных для отображения.")
-		return []
+		return ""
 
 	def _select_logic() -> str:
 
@@ -158,22 +157,18 @@ def select(table_data: list[dict], where_clause: dict | None = None) -> str:
 
 		if not filtered:
 			print("Нет записей, удовлетворяющих условию.")
-			return []
+			return ""
 
 		table = PrettyTable()
 		table.field_names = table_data[0].keys()
 		for row in filtered:
 			table.add_row([row.get(col, "") for col in table.field_names])
-		# print(table)
-		# return filtered
 		table_str = table.get_string()
-		# print(table_str)
 		return table_str
 
 	# ключ для кэша
 	cache_key = str(where_clause) if where_clause else "ALL"
 
-	# return cache_result(cache_key, _select_logic)
 	result = cache_result(cache_key, _select_logic)
 	if result:
 		print(result)

@@ -55,11 +55,11 @@
 6. **Начните играть**
    ## через make:
    ```bash
-    make project
+    make run
    ```
    ## через poetry:
    ```bash
-   poetry run project
+   poetry run database
    ```
 
 ## Управление таблицами
