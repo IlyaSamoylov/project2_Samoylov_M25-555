@@ -2,6 +2,7 @@ import json
 
 from src.primitive_db.constants import DATA_DIR
 
+
 def load_metadata(filepath: str) -> dict:
 	"""
 	Загружает метаданные из JSON. Если файл не найден - возвращает пустой словарь

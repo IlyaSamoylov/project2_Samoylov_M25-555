@@ -21,6 +21,7 @@ from src.primitive_db.utils import (
 	save_table_data,
 )
 
+
 def parse_where(tokens: list[str]) -> dict[str, Any] | None:
 	"""
 	Парсит выражение WHERE в словарь.
